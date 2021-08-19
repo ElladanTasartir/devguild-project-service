@@ -1,0 +1,11 @@
+FROM node:12.17
+
+WORKDIR /home/app
+
+COPY . ./
+
+RUN yarn && yarn cache clean
+
+EXPOSE 3000
+
+CMD ["yarn", "start:dev"]
