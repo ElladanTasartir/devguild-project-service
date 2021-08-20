@@ -2,6 +2,7 @@ import {
   Body,
   ClassSerializerInterceptor,
   Controller,
+  Get,
   Post,
   UseInterceptors,
   ValidationPipe,
@@ -20,5 +21,11 @@ export class ProjectController {
     @Body(ValidationPipe) createProjectDTO: CreateProjectDTO,
   ): Promise<Project> {
     return this.projectService.createNewProject(createProjectDTO);
+  }
+
+  @Get()
+  @UseInterceptors(ClassSerializerInterceptor)
+  findProjects(): Promise<Project[]> {
+    return this.projectService.findProjects();
   }
 }

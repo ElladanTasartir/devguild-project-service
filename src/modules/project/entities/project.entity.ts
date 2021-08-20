@@ -23,7 +23,7 @@ export class Project {
   @Column()
   user_id: string;
 
-  @OneToMany(() => Technology, (tech) => tech.project_id)
+  @OneToMany(() => Technology, (tech) => tech.project)
   technologies: Technology[];
 
   @Column()

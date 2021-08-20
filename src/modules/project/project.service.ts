@@ -23,8 +23,6 @@ export class ProjectService {
       technologies.map((tech) => ({ ...tech, project_id: id })),
     );
 
-    console.log(createdTechnologies);
-
     return this.technologyRepository.save(createdTechnologies);
   }
 
@@ -47,5 +45,9 @@ export class ProjectService {
     );
 
     return project;
+  }
+
+  findProjects(): Promise<Project[]> {
+    return this.projectRepository.find({ relations: ['technologies'] });
   }
 }
