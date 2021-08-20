@@ -22,7 +22,7 @@ services:
     ports:
       - 5432:5432
     environment:
-      - POSTGRES_project=devguild
+      - POSTGRES_USER=devguild
       - POSTGRES_PASSWORD=project-service
       - POSTGRES_DB=devguild-project-db
     networks:
