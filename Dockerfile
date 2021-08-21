@@ -8,6 +8,6 @@ RUN yarn
 
 RUN yarn build
 
-EXPOSE 3000
+EXPOSE 6000
 
 CMD ["node", "dist/src/main.js"]

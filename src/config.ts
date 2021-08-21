@@ -20,6 +20,8 @@ REQUIRED_ENV_VARS.forEach((envVar) => {
   }
 });
 
+export const port = Number(process.env.PORT) || 3000;
+
 export const postgres = {
   host: process.env.POSTGRES_HOST,
   port: Number(process.env.POSTGRES_PORT),
