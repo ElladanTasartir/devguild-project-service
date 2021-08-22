@@ -13,6 +13,7 @@ import { CreateProjectDTO } from './dtos/create-project.dto';
 import { FindProjectByIdDTO } from './dtos/find-project-by-id.dto';
 import { FindProjectDTO } from './dtos/find-project.dto';
 import { Project } from './entities/project.entity';
+import { ProjectWithProjectMembers } from './interfaces/project-members';
 import { ProjectService } from './project.service';
 
 @Controller('projects')
@@ -30,7 +31,7 @@ export class ProjectController {
   @Get(':id')
   findProjectById(
     @Param(ValidationPipe) findProjectByIdDTO: FindProjectByIdDTO,
-  ): Promise<Project> {
+  ): Promise<ProjectWithProjectMembers> {
     return this.projectService.findProjectById(findProjectByIdDTO);
   }
 

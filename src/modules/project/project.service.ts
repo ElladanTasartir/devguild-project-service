@@ -1,12 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { FetchUsersService } from '../fetch/fetch-users.service';
+import { User } from '../fetch/interfaces/user.interface';
 import { CreateProjectDTO } from './dtos/create-project.dto';
 import { FindProjectByIdDTO } from './dtos/find-project-by-id.dto';
 import { FindProjectDTO } from './dtos/find-project.dto';
 import { TechnologyDTO } from './dtos/technology-dto';
 import { Technology } from './entities/project-technologies.entity';
 import { Project } from './entities/project.entity';
+import { ProjectWithProjectMembers } from './interfaces/project-members';
+import { ProjectWithUser } from './interfaces/project-with-users';
 
 @Injectable()
 export class ProjectService {
@@ -15,6 +19,7 @@ export class ProjectService {
     private readonly projectRepository: Repository<Project>,
     @InjectRepository(Technology)
     private readonly technologyRepository: Repository<Technology>,
+    private readonly fetchUsersService: FetchUsersService,
   ) {}
 
   private async mapTechnologiesToProject(
@@ -46,31 +51,97 @@ export class ProjectService {
       project.id,
     );
 
+    await this.fetchUsersService.insertProjectMember(
+      project.id,
+      project.user_id,
+    );
+
     return project;
   }
 
-  findProjectById(findProjectByIdDTO: FindProjectByIdDTO): Promise<Project> {
-    return this.projectRepository.findOne(findProjectByIdDTO.id, {
+  async findProjectById(
+    findProjectByIdDTO: FindProjectByIdDTO,
+  ): Promise<ProjectWithProjectMembers> {
+    const project = await this.projectRepository.findOne(
+      findProjectByIdDTO.id,
+      {
+        relations: ['technologies'],
+      },
+    );
+
+    if (!project) {
+      throw new NotFoundException(
+        `No project with ID "${findProjectByIdDTO.id} found"`,
+      );
+    }
+
+    const users = await this.fetchUsersService.getProjectMembers(project.id);
+
+    delete project.user_id;
+
+    return {
+      ...project,
+      project_members: users,
+    };
+  }
+
+  async findProjects(): Promise<ProjectWithUser[]> {
+    const projects = await this.projectRepository.find({
       relations: ['technologies'],
+      skip: 0,
+      take: 15,
     });
+
+    const userIds = projects.map((project) => project.user_id);
+
+    const users = await this.fetchUsersService.getUsersByUserIds(userIds);
+
+    return this.mapUsersToProjects(projects, users);
   }
 
-  findProjects(): Promise<Project[]> {
-    return this.projectRepository.find({ relations: ['technologies'] });
-  }
-
-  findProjectsByTechnologyIds(
+  async findProjectsByTechnologyIds(
     findProjectDTO: FindProjectDTO,
-  ): Promise<Project[]> {
+  ): Promise<ProjectWithUser[]> {
     const { technology_ids } = findProjectDTO;
 
     const queryBuilder = this.projectRepository.createQueryBuilder('project');
 
-    return queryBuilder
+    const projects = await queryBuilder
       .leftJoinAndSelect('project.technologies', 'technology')
       .where('technology.technology_id IN(:...technology_ids)', {
         technology_ids,
       })
+      .limit(15)
       .getMany();
+
+    if (!projects.length) {
+      return [];
+    }
+
+    const userIds = projects.map((project) => project.user_id);
+
+    const users = await this.fetchUsersService.getUsersByUserIds(userIds);
+
+    return this.mapUsersToProjects(projects, users);
+  }
+
+  private mapUsersToProjects(
+    projects: Project[],
+    users: User[],
+  ): ProjectWithUser[] {
+    return projects.map((project) => {
+      const foundUser = users.find((user) => user.id === project.user_id);
+
+      if (!foundUser) {
+        return;
+      }
+
+      delete project.user_id;
+
+      return {
+        ...project,
+        user: foundUser,
+      };
+    });
   }
 }

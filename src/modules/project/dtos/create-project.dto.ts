@@ -2,6 +2,7 @@ import { Type } from 'class-transformer';
 import {
   IsArray,
   IsString,
+  IsUrl,
   IsUUID,
   Matches,
   MinLength,
@@ -27,6 +28,9 @@ export class CreateProjectDTO {
   technologies: TechnologyDTO[];
 
   @IsString()
-  @Matches(/github\.com/)
+  @IsUrl()
+  @Matches(/github\.com/, {
+    message: 'The repository must be a github repository URL',
+  })
   repository: string;
 }
