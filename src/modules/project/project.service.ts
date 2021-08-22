@@ -1,11 +1,16 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { FetchUsersService } from '../fetch/fetch-users.service';
 import { User } from '../fetch/interfaces/user.interface';
 import { CreateProjectDTO } from './dtos/create-project.dto';
 import { FindProjectByIdDTO } from './dtos/find-project-by-id.dto';
 import { FindProjectDTO } from './dtos/find-project.dto';
+import { InsertTechnologiesInProjectDTO } from './dtos/insert-technologies-in-project.dto';
 import { TechnologyDTO } from './dtos/technology-dto';
 import { Technology } from './entities/project-technologies.entity';
 import { Project } from './entities/project.entity';
@@ -123,6 +128,38 @@ export class ProjectService {
     const users = await this.fetchUsersService.getUsersByUserIds(userIds);
 
     return this.mapUsersToProjects(projects, users);
+  }
+
+  private findProjectByTechnologiesIdAndId(
+    technologies: TechnologyDTO[],
+    id: string,
+  ): Promise<Technology[]> {
+    return this.technologyRepository.find({
+      where: {
+        technology_id: In(technologies.map((tech) => tech.technology_id)),
+        project_id: id,
+      },
+    });
+  }
+
+  async insertTechnologiesInProject(
+    insertTechnologiesInProjectDTO: InsertTechnologiesInProjectDTO,
+    id: string,
+  ): Promise<Technology[]> {
+    const { technologies } = insertTechnologiesInProjectDTO;
+
+    const projectAlreadyHasTechnologies =
+      await this.findProjectByTechnologiesIdAndId(technologies, id);
+
+    if (projectAlreadyHasTechnologies.length) {
+      throw new BadRequestException(
+        `Project already has technologies "${projectAlreadyHasTechnologies
+          .map((tech) => tech.technology_id)
+          .join(',')}"`,
+      );
+    }
+
+    return this.mapTechnologiesToProject(technologies, id);
   }
 
   private mapUsersToProjects(

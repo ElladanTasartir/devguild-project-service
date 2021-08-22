@@ -12,6 +12,8 @@ import {
 import { CreateProjectDTO } from './dtos/create-project.dto';
 import { FindProjectByIdDTO } from './dtos/find-project-by-id.dto';
 import { FindProjectDTO } from './dtos/find-project.dto';
+import { InsertTechnologiesInProjectDTO } from './dtos/insert-technologies-in-project.dto';
+import { Technology } from './entities/project-technologies.entity';
 import { Project } from './entities/project.entity';
 import { ProjectWithProjectMembers } from './interfaces/project-members';
 import { ProjectService } from './project.service';
@@ -26,6 +28,19 @@ export class ProjectController {
     @Body(ValidationPipe) createProjectDTO: CreateProjectDTO,
   ): Promise<Project> {
     return this.projectService.createNewProject(createProjectDTO);
+  }
+
+  @Post(':id/techs')
+  insertTechnologiesInProject(
+    @Param(ValidationPipe)
+    findProjectByIdDTO: FindProjectByIdDTO,
+    @Body(ValidationPipe)
+    insertTechnologiesInProjectDTO: InsertTechnologiesInProjectDTO,
+  ): Promise<Technology[]> {
+    return this.projectService.insertTechnologiesInProject(
+      insertTechnologiesInProjectDTO,
+      findProjectByIdDTO.id,
+    );
   }
 
   @Get(':id')
