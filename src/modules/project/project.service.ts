@@ -97,7 +97,7 @@ export class ProjectService {
       take: 15,
     });
 
-    const userIds = projects.map((project) => project.user_id);
+    const userIds = [...new Set(projects.map((project) => project.user_id))];
 
     const users = await this.fetchUsersService.getUsersByUserIds(userIds);
 
@@ -114,7 +114,7 @@ export class ProjectService {
     const projects = await queryBuilder
       .leftJoinAndSelect('project.technologies', 'technology')
       .where('technology.technology_id IN(:...technology_ids)', {
-        technology_ids,
+        technology_ids: [...new Set(technology_ids)],
       })
       .limit(15)
       .getMany();
@@ -123,11 +123,16 @@ export class ProjectService {
       return [];
     }
 
-    const userIds = projects.map((project) => project.user_id);
+    const userIds = [...new Set(projects.map((project) => project.user_id))];
 
     const users = await this.fetchUsersService.getUsersByUserIds(userIds);
 
-    return this.mapUsersToProjects(projects, users);
+    const projectsWithUsers = this.mapUsersToProjects(projects, users);
+
+    return projectsWithUsers.map((project) => ({
+      ...project,
+      technologies: undefined,
+    }));
   }
 
   private findProjectByTechnologiesIdAndId(
@@ -136,7 +141,9 @@ export class ProjectService {
   ): Promise<Technology[]> {
     return this.technologyRepository.find({
       where: {
-        technology_id: In(technologies.map((tech) => tech.technology_id)),
+        technology_id: In([
+          ...new Set(technologies.map((tech) => tech.technology_id)),
+        ]),
         project_id: id,
       },
     });

@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
 import {
+  ArrayMinSize,
   IsArray,
   IsString,
   IsUrl,
@@ -24,6 +25,7 @@ export class CreateProjectDTO {
 
   @IsArray()
   @Type(() => TechnologyDTO)
+  @ArrayMinSize(1)
   @ValidateNested({ each: true })
   technologies: TechnologyDTO[];
 
