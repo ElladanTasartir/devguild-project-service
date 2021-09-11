@@ -7,7 +7,7 @@ services:
       context: .
       dockerfile: Dockerfile-dev
     depends_on:
-      - db
+      - db-project-service
     ports:
       - 6000:6000
     volumes:
