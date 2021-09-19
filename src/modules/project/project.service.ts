@@ -177,7 +177,10 @@ export class ProjectService {
       const foundUser = users.find((user) => user.id === project.user_id);
 
       if (!foundUser) {
-        return;
+        return {
+          ...project,
+          user: null,
+        };
       }
 
       delete project.user_id;
