@@ -127,26 +127,27 @@ export class ProjectService {
   ): Promise<ProjectWithUser[]> {
     const { technology_ids } = findProjectDTO;
 
-    const queryBuilder = this.projectRepository.createQueryBuilder('project');
+    const technologyQueryBuilder =
+      this.technologyRepository.createQueryBuilder('technology');
 
-    // const projects = await queryBuilder
-    //   .leftJoinAndSelect('project.technologies', 'technology')
-    //   .where('technology.technology_id IN(:...technology_ids)', {
-    //     technology_ids: [...new Set(technology_ids)],
-    //   })
-    //   .limit(15)
-    //   .getMany();
+    const technologies = await technologyQueryBuilder
+      .select('project_id')
+      .where('technology.technology_id IN(:...technology_ids)', {
+        technology_ids: [...new Set(technology_ids)],
+      })
+      .groupBy('technology.project_id')
+      .limit(15)
+      .getRawMany();
 
-    const technologies = await this.technologyRepository.find({
-      where: {
-        technology_id: In(technology_ids),
-      },
-      skip: 0,
-      limit: 15,
-    });
+    if (!technologies.length) {
+      return [];
+    }
 
     const projects = await this.projectRepository.find({
-      tehc,
+      where: {
+        id: In(technologies.map((tech) => tech.project_id)),
+      },
+      relations: ['technologies'],
     });
 
     if (!projects.length) {
@@ -157,12 +158,7 @@ export class ProjectService {
 
     const users = await this.fetchUsersService.getUsersByUserIds(userIds);
 
-    const projectsWithUsers = this.mapUsersToProjects(projects, users);
-
-    return projectsWithUsers.map((project) => ({
-      ...project,
-      technologies: undefined,
-    }));
+    return this.mapUsersToProjects(projects, users);
   }
 
   private findProjectByTechnologiesIdAndId(
