@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -69,10 +70,16 @@ export class ProjectService {
     id: string,
     updateProjectDTO: UpdateProjectDTO,
   ): Promise<Project> {
+    const { user_id } = updateProjectDTO;
+
     const project = await this.projectRepository.findOne(id);
 
     if (!project) {
       throw new NotFoundException(`No project with ID "${id} found"`);
+    }
+
+    if (user_id !== project.user_id) {
+      throw new ForbiddenException(`You can only update your own projects`);
     }
 
     for (const key in updateProjectDTO) {

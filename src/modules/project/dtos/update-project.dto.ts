@@ -4,6 +4,8 @@ import {
   Matches,
   MinLength,
   IsOptional,
+  IsUUID,
+  IsNotEmpty,
 } from 'class-validator';
 
 export class UpdateProjectDTO {
@@ -24,4 +26,8 @@ export class UpdateProjectDTO {
   })
   @IsOptional()
   repository?: string;
+
+  @IsUUID()
+  @IsNotEmpty()
+  user_id: string;
 }
