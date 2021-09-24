@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   Post,
+  Put,
   Query,
   UseInterceptors,
   ValidationPipe,
@@ -13,6 +14,7 @@ import { CreateProjectDTO } from './dtos/create-project.dto';
 import { FindProjectByIdDTO } from './dtos/find-project-by-id.dto';
 import { FindProjectDTO } from './dtos/find-project.dto';
 import { InsertTechnologiesInProjectDTO } from './dtos/insert-technologies-in-project.dto';
+import { UpdateProjectDTO } from './dtos/update-project.dto';
 import { Technology } from './entities/project-technologies.entity';
 import { Project } from './entities/project.entity';
 import { ProjectWithProjectMembers } from './interfaces/project-members';
@@ -22,6 +24,17 @@ import { ProjectService } from './project.service';
 @UseInterceptors(ClassSerializerInterceptor)
 export class ProjectController {
   constructor(private readonly projectService: ProjectService) {}
+
+  @Put(':id')
+  updateProject(
+    @Param(ValidationPipe) findProjectByIdDTO: FindProjectByIdDTO,
+    @Body(ValidationPipe) updateProjectDTO: UpdateProjectDTO,
+  ): Promise<Project> {
+    return this.projectService.updateProject(
+      findProjectByIdDTO.id,
+      updateProjectDTO,
+    );
+  }
 
   @Post()
   createNewProject(

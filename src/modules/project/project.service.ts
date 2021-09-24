@@ -12,6 +12,7 @@ import { FindProjectByIdDTO } from './dtos/find-project-by-id.dto';
 import { FindProjectDTO } from './dtos/find-project.dto';
 import { InsertTechnologiesInProjectDTO } from './dtos/insert-technologies-in-project.dto';
 import { TechnologyDTO } from './dtos/technology-dto';
+import { UpdateProjectDTO } from './dtos/update-project.dto';
 import { Technology } from './entities/project-technologies.entity';
 import { Project } from './entities/project.entity';
 import { ProjectWithProjectMembers } from './interfaces/project-members';
@@ -64,6 +65,23 @@ export class ProjectService {
     return project;
   }
 
+  async updateProject(
+    id: string,
+    updateProjectDTO: UpdateProjectDTO,
+  ): Promise<Project> {
+    const project = await this.projectRepository.findOne(id);
+
+    if (!project) {
+      throw new NotFoundException(`No project with ID "${id} found"`);
+    }
+
+    for (const key in updateProjectDTO) {
+      project[key] = updateProjectDTO[key];
+    }
+
+    return this.projectRepository.save(project);
+  }
+
   async findProjectById(
     findProjectByIdDTO: FindProjectByIdDTO,
   ): Promise<ProjectWithProjectMembers> {
@@ -111,13 +129,25 @@ export class ProjectService {
 
     const queryBuilder = this.projectRepository.createQueryBuilder('project');
 
-    const projects = await queryBuilder
-      .leftJoinAndSelect('project.technologies', 'technology')
-      .where('technology.technology_id IN(:...technology_ids)', {
-        technology_ids: [...new Set(technology_ids)],
-      })
-      .limit(15)
-      .getMany();
+    // const projects = await queryBuilder
+    //   .leftJoinAndSelect('project.technologies', 'technology')
+    //   .where('technology.technology_id IN(:...technology_ids)', {
+    //     technology_ids: [...new Set(technology_ids)],
+    //   })
+    //   .limit(15)
+    //   .getMany();
+
+    const technologies = await this.technologyRepository.find({
+      where: {
+        technology_id: In(technology_ids),
+      },
+      skip: 0,
+      limit: 15,
+    });
+
+    const projects = await this.projectRepository.find({
+      tehc,
+    });
 
     if (!projects.length) {
       return [];
