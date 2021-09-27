@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
+import { FetchTechService } from '../fetch/fetch-tech.service';
 import { FetchUsersService } from '../fetch/fetch-users.service';
 import { User } from '../fetch/interfaces/user.interface';
 import { CreateProjectDTO } from './dtos/create-project.dto';
@@ -16,8 +17,10 @@ import { TechnologyDTO } from './dtos/technology-dto';
 import { UpdateProjectDTO } from './dtos/update-project.dto';
 import { Technology } from './entities/project-technologies.entity';
 import { Project } from './entities/project.entity';
-import { ProjectWithProjectMembers } from './interfaces/project-members';
-import { ProjectWithUser } from './interfaces/project-with-users';
+import { ProjectWithProjectMembers } from './interfaces/project-members.interface';
+import { ProjectsTechnologies } from './interfaces/project-technologies.interface';
+import { ProjectWithTechnologies } from './interfaces/project-with-technologies.interface';
+import { ProjectWithUser } from './interfaces/project-with-users.interface';
 
 @Injectable()
 export class ProjectService {
@@ -27,6 +30,7 @@ export class ProjectService {
     @InjectRepository(Technology)
     private readonly technologyRepository: Repository<Technology>,
     private readonly fetchUsersService: FetchUsersService,
+    private readonly fetchTechService: FetchTechService,
   ) {}
 
   private async mapTechnologiesToProject(
@@ -105,12 +109,21 @@ export class ProjectService {
       );
     }
 
-    const users = await this.fetchUsersService.getProjectMembers(project.id);
+    const [users, technologies] = await Promise.all([
+      this.fetchUsersService.getProjectMembers(project.id),
+      project.technologies.length
+        ? this.fetchTechService.findTechnologiesbyIds(
+            project.technologies.map((tech) => tech.technology_id),
+          )
+        : null,
+    ]);
 
     delete project.user_id;
+    delete project.technologies;
 
     return {
       ...project,
+      project_technologies: technologies || [],
       project_members: users,
     };
   }
@@ -123,10 +136,29 @@ export class ProjectService {
     });
 
     const userIds = [...new Set(projects.map((project) => project.user_id))];
+    const technologiesIds = [
+      ...new Set(
+        [].concat(
+          ...projects.map((project) =>
+            project.technologies.map((tech) => tech.technology_id),
+          ),
+        ),
+      ),
+    ];
 
-    const users = await this.fetchUsersService.getUsersByUserIds(userIds);
+    const [users, technologies] = await Promise.all([
+      this.fetchUsersService.getUsersByUserIds(userIds),
+      technologiesIds.length
+        ? this.fetchTechService.findTechnologiesbyIds(technologiesIds)
+        : null,
+    ]);
 
-    return this.mapUsersToProjects(projects, users);
+    const projectsWithTechnologies = this.mapTechsToProjects(
+      projects,
+      technologies,
+    );
+
+    return this.mapUsersToProjects(projectsWithTechnologies, users);
   }
 
   async findProjectsByTechnologyIds(
@@ -137,7 +169,7 @@ export class ProjectService {
     const technologyQueryBuilder =
       this.technologyRepository.createQueryBuilder('technology');
 
-    const technologies = await technologyQueryBuilder
+    const technologiesFound = await technologyQueryBuilder
       .select('project_id')
       .where('technology.technology_id IN(:...technology_ids)', {
         technology_ids: [...new Set(technology_ids)],
@@ -146,13 +178,13 @@ export class ProjectService {
       .limit(15)
       .getRawMany();
 
-    if (!technologies.length) {
+    if (!technologiesFound.length) {
       return [];
     }
 
     const projects = await this.projectRepository.find({
       where: {
-        id: In(technologies.map((tech) => tech.project_id)),
+        id: In(technologiesFound.map((tech) => tech.project_id)),
       },
       relations: ['technologies'],
     });
@@ -162,10 +194,29 @@ export class ProjectService {
     }
 
     const userIds = [...new Set(projects.map((project) => project.user_id))];
+    const technologiesIds = [
+      ...new Set(
+        [].concat(
+          ...projects.map((project) =>
+            project.technologies.map((tech) => tech.technology_id),
+          ),
+        ),
+      ),
+    ];
 
-    const users = await this.fetchUsersService.getUsersByUserIds(userIds);
+    const [users, technologies] = await Promise.all([
+      this.fetchUsersService.getUsersByUserIds(userIds),
+      technologiesIds.length
+        ? this.fetchTechService.findTechnologiesbyIds(technologiesIds)
+        : null,
+    ]);
 
-    return this.mapUsersToProjects(projects, users);
+    const projectsWithTechnologies = this.mapTechsToProjects(
+      projects,
+      technologies,
+    );
+
+    return this.mapUsersToProjects(projectsWithTechnologies, users);
   }
 
   private findProjectByTechnologiesIdAndId(
@@ -202,8 +253,29 @@ export class ProjectService {
     return this.mapTechnologiesToProject(technologies, id);
   }
 
-  private mapUsersToProjects(
+  private mapTechsToProjects(
     projects: Project[],
+    technologies: ProjectsTechnologies[],
+  ): ProjectWithTechnologies[] {
+    return projects.map((project) => {
+      const technologiesFromProject = technologies.filter(
+        (tech) =>
+          !!project.technologies.find(
+            (technology) => tech.id === technology.technology_id,
+          ),
+      );
+
+      delete project.technologies;
+
+      return {
+        ...project,
+        project_technologies: technologiesFromProject,
+      };
+    });
+  }
+
+  private mapUsersToProjects(
+    projects: ProjectWithTechnologies[],
     users: User[],
   ): ProjectWithUser[] {
     return projects.map((project) => {

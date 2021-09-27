@@ -17,7 +17,7 @@ import { InsertTechnologiesInProjectDTO } from './dtos/insert-technologies-in-pr
 import { UpdateProjectDTO } from './dtos/update-project.dto';
 import { Technology } from './entities/project-technologies.entity';
 import { Project } from './entities/project.entity';
-import { ProjectWithProjectMembers } from './interfaces/project-members';
+import { ProjectWithProjectMembers } from './interfaces/project-members.interface';
 import { ProjectService } from './project.service';
 
 @Controller('projects')

@@ -12,6 +12,7 @@ const REQUIRED_ENV_VARS = [
   'POSTGRES_PASSWORD',
   'POSTGRES_DATABASE',
   'DEVGUILD_USER_SERVICE_URL',
+  'DEVGUILD_TECH_SERVICE_URL',
 ];
 
 REQUIRED_ENV_VARS.forEach((envVar) => {
@@ -24,6 +25,8 @@ REQUIRED_ENV_VARS.forEach((envVar) => {
 export const port = Number(process.env.PORT) || 3000;
 
 export const userServiceURL = `http://${process.env.DEVGUILD_USER_SERVICE_URL}`;
+
+export const techServiceURL = `http://${process.env.DEVGUILD_TECH_SERVICE_URL}`;
 
 export const postgres = {
   host: process.env.POSTGRES_HOST,
