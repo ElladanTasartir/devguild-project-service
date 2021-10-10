@@ -147,7 +147,7 @@ export class ProjectService {
     ];
 
     const [users, technologies] = await Promise.all([
-      this.fetchUsersService.getUsersByUserIds(userIds),
+      userIds.length ? this.fetchUsersService.getUsersByUserIds(userIds) : null,
       technologiesIds.length
         ? this.fetchTechService.findTechnologiesbyIds(technologiesIds)
         : null,
@@ -276,7 +276,7 @@ export class ProjectService {
 
   private mapUsersToProjects(
     projects: ProjectWithTechnologies[],
-    users: User[],
+    users: User[] = [],
   ): ProjectWithUser[] {
     return projects.map((project) => {
       const foundUser = users.find((user) => user.id === project.user_id);
