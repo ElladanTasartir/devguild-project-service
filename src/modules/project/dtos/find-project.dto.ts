@@ -1,5 +1,5 @@
-import { Transform } from 'class-transformer';
-import { IsInt, IsOptional, IsPositive } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import { IsInt, IsOptional, IsPositive, Min } from 'class-validator';
 
 export class FindProjectDTO {
   @IsOptional()
@@ -7,4 +7,10 @@ export class FindProjectDTO {
   @IsInt({ each: true })
   @IsPositive({ each: true })
   technology_ids: number[];
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page: number;
 }

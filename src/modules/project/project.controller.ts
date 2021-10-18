@@ -88,6 +88,6 @@ export class ProjectController {
       return this.projectService.findProjectsByTechnologyIds(findProjectDTO);
     }
 
-    return this.projectService.findProjects();
+    return this.projectService.findProjects(findProjectDTO);
   }
 }

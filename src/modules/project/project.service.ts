@@ -148,11 +148,18 @@ export class ProjectService {
     };
   }
 
-  async findProjects(): Promise<ProjectWithUser[]> {
+  async findProjects(
+    findProjectDTO: FindProjectDTO,
+  ): Promise<ProjectWithUser[]> {
+    const { page = 1 } = findProjectDTO;
+
+    const pageSize = 15;
+    const skipSize = pageSize * (page - 1);
+
     const projects = await this.projectRepository.find({
       relations: ['technologies'],
-      skip: 0,
-      take: 15,
+      skip: skipSize,
+      take: pageSize,
     });
 
     const userIds = [...new Set(projects.map((project) => project.user_id))];
@@ -184,8 +191,11 @@ export class ProjectService {
   async findProjectsByTechnologyIds(
     findProjectDTO: FindProjectDTO,
   ): Promise<ProjectWithUser[]> {
-    const { technology_ids } = findProjectDTO;
+    const { technology_ids, page = 1 } = findProjectDTO;
 
+    const pageSize = 15;
+    const skipSize = pageSize * (page - 1);
+    console.log(skipSize);
     const technologyQueryBuilder =
       this.technologyRepository.createQueryBuilder('technology');
 
@@ -195,7 +205,6 @@ export class ProjectService {
         technology_ids: [...new Set(technology_ids)],
       })
       .groupBy('technology.project_id')
-      .limit(15)
       .getRawMany();
 
     if (!technologiesFound.length) {
@@ -207,6 +216,8 @@ export class ProjectService {
         id: In(technologiesFound.map((tech) => tech.project_id)),
       },
       relations: ['technologies'],
+      skip: skipSize,
+      take: pageSize,
     });
 
     if (!projects.length) {
