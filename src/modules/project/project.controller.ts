@@ -63,6 +63,22 @@ export class ProjectController {
     return this.projectService.findProjectById(findProjectByIdDTO);
   }
 
+  @Get(':id/user')
+  findProjectByUserId(
+    @Param(ValidationPipe) findProjectByIdDTO: FindProjectByIdDTO,
+  ): Promise<Project[]> {
+    return this.projectService.findProjectsByUserId(findProjectByIdDTO.id);
+  }
+
+  @Get(':id/project-members')
+  findProjectsWhereUserIsAMember(
+    @Param(ValidationPipe) findProjectByIdDTO: FindProjectByIdDTO,
+  ): Promise<Project[]> {
+    return this.projectService.findProjectsWhereUserIsAMember(
+      findProjectByIdDTO.id,
+    );
+  }
+
   @Get()
   findProjects(
     @Query(new ValidationPipe({ transform: true }))

@@ -37,6 +37,14 @@ export class FetchUsersService {
     return data;
   }
 
+  async getProjectsWhereUserIsAMember(user_id: string): Promise<string[]> {
+    const { data } = await this.httpService.get<string[]>(
+      `/projects/${user_id}/project-members`,
+    );
+
+    return data;
+  }
+
   async insertProjectMember(
     project_id: string,
     user_id: string,

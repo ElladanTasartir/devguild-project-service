@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { In, Not, Repository } from 'typeorm';
 import { FetchTechService } from '../fetch/fetch-tech.service';
 import { FetchUsersService } from '../fetch/fetch-users.service';
 import { User } from '../fetch/interfaces/user.interface';
@@ -91,6 +91,26 @@ export class ProjectService {
     }
 
     return this.projectRepository.save(project);
+  }
+
+  findProjectsByUserId(id: string): Promise<Project[]> {
+    return this.projectRepository.find({
+      where: {
+        user_id: id,
+      },
+    });
+  }
+
+  async findProjectsWhereUserIsAMember(id: string): Promise<Project[]> {
+    const projectIds =
+      await this.fetchUsersService.getProjectsWhereUserIsAMember(id);
+
+    return this.projectRepository.find({
+      where: {
+        id: In(projectIds),
+        user_id: Not(id),
+      },
+    });
   }
 
   async findProjectById(
