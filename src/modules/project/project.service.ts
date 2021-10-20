@@ -138,7 +138,6 @@ export class ProjectService {
         : null,
     ]);
 
-    delete project.user_id;
     delete project.technologies;
 
     return {
