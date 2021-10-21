@@ -98,6 +98,9 @@ export class ProjectService {
       where: {
         user_id: id,
       },
+      order: {
+        created_at: 'DESC',
+      },
     });
   }
 
@@ -109,6 +112,9 @@ export class ProjectService {
       where: {
         id: In(projectIds),
         user_id: Not(id),
+      },
+      order: {
+        created_at: 'DESC',
       },
     });
   }
@@ -159,6 +165,9 @@ export class ProjectService {
       relations: ['technologies'],
       skip: skipSize,
       take: pageSize,
+      order: {
+        created_at: 'DESC',
+      },
     });
 
     const userIds = [...new Set(projects.map((project) => project.user_id))];
@@ -217,6 +226,9 @@ export class ProjectService {
       relations: ['technologies'],
       skip: skipSize,
       take: pageSize,
+      order: {
+        created_at: 'DESC',
+      },
     });
 
     if (!projects.length) {
