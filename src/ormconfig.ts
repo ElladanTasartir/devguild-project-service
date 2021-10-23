@@ -16,4 +16,9 @@ export const ormConfig = {
   database,
   logging,
   synchronize,
+  extra: {
+    ssl: {
+      rejectUnauthorized: false,
+    },
+  },
 } as TypeOrmModuleOptions;
